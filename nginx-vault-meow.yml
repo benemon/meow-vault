@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels: 
+    app: nginx-vault-meow
+  name: nginx-vault-meow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-vault-meow
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: nginx-vault-meow
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-inject-status: 'update'
+        vault.hashicorp.com/role: 'meow'
+        vault.hashicorp.com/agent-inject-secret-index.html: 'admin/internal/data/meow/config'
+        vault.hashicorp.com/agent-inject-template-index.html: |
+          {{- with secret "admin/internal/data/meow/config" -}}
+          <html>
+          <head><title>Meow!</title></head>
+            <body>
+              <div style="width:800px;margin: 0 auto">
+              <!-- BEGIN -->
+                  <center><h1>Welcome to {{ .Data.data.owner }}'s app.</h1></center>
+                  <center><img src="http://{{ .Data.data.image_placeholder }}/{{ .Data.data.image_width }}/{{ .Data.data.image_height }}"></img></center>
+                  <p>Some other fun ones to try are fillmurray.com, placecage.com, placebeard.it, loremflickr.com, baconmockup.com, placeimg.com, placebear.com, placeskull.com, stevensegallery.com, placedog.net</p>
+              <!-- END -->
+              </div>
+            </body>
+          </html>
+          {{- end -}}
+    spec:
+      serviceAccountName: meow-app
+      containers:
+      - image: image-registry.openshift-image-registry.svc:5000/hashicorp-external/nginx-vault-build:latest
+        name: nginx-vault
+        ports:
+        - containerPort: 8080
